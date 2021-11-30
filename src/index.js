@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { MongoClient } = require("mongodb");
+const ObjectID = require('mongodb').ObjectID;
 require("dotenv").config();
 
 const app = express();
@@ -25,12 +26,56 @@ client.connect((err) => {
   const features = client.db(process.env.DB_NAME).collection("features");
 
   app.post("/addFeature", (req, res) => {
-    const { useremail, username, title, description, requestDate } = req.body;
+    const { publish, useremail, username, title, description, requestDate } = req.body;
 
-    features.insertOne({ useremail, username, title, description, requestDate }).then((result) => {
+    features.insertOne({publish, useremail, username, title, description, requestDate }).then((result) => {
       res.status(200).send(result.acknowledged);
     });
   });
+
+  app.get('/features', (req, res) => {
+    features.find({})
+    .toArray((err, documents) => {
+      res.status(200).send(documents)
+    })
+  })
+
+  app.patch('/updateFeature/:id', (req, res) => {
+    const id = req.params.id;
+    const { title, description } = req.body;
+
+    features.updateOne({_id: ObjectID(id)},{
+      $set: {title, description }
+    })
+    .then( result => {
+      res.status(200).send( result.modifiedCount > 0)
+    })
+    .catch(err => console.log(err))
+  })
+
+  app.patch('/updatePublishStatus/:id', (req, res) => {
+    const {publish} = req.body;
+    const id =  req.params.id;
+
+    features.updateOne({ _id: ObjectID(id) }, {
+      $set: { publish }
+    })
+    .then(result => {
+      res.status(200).send( result.modifiedCount > 0)
+    })
+    .catch(err => console.log(err))
+
+  })
+
+  app.delete('/deleteFeature/:id', (req, res) => {
+    const id = req.params.id;
+
+    features.deleteOne({_id: ObjectID(id)})
+    .then(result => {
+      res.status(200).send(result.deletedCount > 0 )
+    })
+    .catch(err => console.log(err))
+  })
 
   console.log("connected to mongo instance..");
 });
