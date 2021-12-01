@@ -24,6 +24,10 @@ const client = new MongoClient(uri, {
 });
 client.connect((err) => {
   const features = client.db(process.env.DB_NAME).collection("features");
+  const comments = client.db(process.env.DB_NAME).collection('comments');
+  const admins = client.db(process.env.DB_NAME).collection("admins");
+
+  // users operations
 
   app.post("/addFeature", (req, res) => {
     const { publish, useremail, username, title, description, requestDate } = req.body;
@@ -32,6 +36,61 @@ client.connect((err) => {
       res.status(200).send(result.acknowledged);
     });
   });
+  
+  app.get('/getPublishedFeatures', (req, res) => {
+    const search = req.query.search;
+
+    features.find({ publish: true, title: {$regex: search} })
+    .toArray((err, documents) => {
+      res.status(200).send(documents)
+    })
+  })
+
+  app.post('/setUserComment', (req, res) => {
+    const { contentId, username, useremail, comment, commentDate } = req.body;
+
+    comments.insertOne({contentId, username, useremail, comment, commentDate})
+    .then(result => {
+      res.status(200).send(result.acknowledged)
+    });
+  })
+
+
+  app.get('/getComments/:id', (req, res) => {
+    const id =  req.params.id
+    comments.find({contentId: id})
+    .toArray((err, documents) => {
+      res.status(200).send(documents)
+    })
+  })
+
+
+  app.delete('/deleteComment/:id', (req, res) => {
+    const id = req.params.id;
+    comments.deleteOne({_id: ObjectID(id)})
+    .then(result => {
+      res.status(200).send(result.deletedCount > 0 )
+    })
+    .catch(err => console.log(err))
+  })
+
+
+  // admin's operations
+
+  app.get('/checkAdmin/:email', (req, res) => {
+
+    const email = req.params.email;
+
+    console.log(email)
+
+    admins.find({role: 'admin', email})
+    .toArray((err, documents) => {
+      res.status(200).send(documents.length > 0)
+    })
+
+
+
+  })
 
   app.get('/features', (req, res) => {
     features.find({})
