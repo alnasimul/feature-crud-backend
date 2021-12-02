@@ -26,6 +26,7 @@ client.connect((err) => {
   const features = client.db(process.env.DB_NAME).collection("features");
   const comments = client.db(process.env.DB_NAME).collection('comments');
   const admins = client.db(process.env.DB_NAME).collection("admins");
+  const votes = client.db(process.env.DB_NAME).collection("votes")
 
   // users operations
 
@@ -55,10 +56,33 @@ client.connect((err) => {
     });
   })
 
-
   app.get('/getComments/:id', (req, res) => {
     const id =  req.params.id
     comments.find({contentId: id})
+    .toArray((err, documents) => {
+      res.status(200).send(documents)
+    })
+  })
+
+  app.post('/setUserVote', (req, res) => {
+    const { contentId, username, useremail, voteDate } = req.body;
+
+    votes.insertOne({ contentId, username, useremail, voteDate})
+    .then((result) => {
+      if(result){
+        res.status(200).send(result.acknowledged);
+      }
+     })
+    .catch(err => {
+      if(err)
+      res.status(501).send("You Already voted, it's not possible to create new vote!");
+    } )
+  })
+
+  app.get('/getVotes/:id', (req, res) => {
+    const id = req.params.id;
+
+    votes.find({contentId: id})
     .toArray((err, documents) => {
       res.status(200).send(documents)
     })
@@ -68,7 +92,7 @@ client.connect((err) => {
   app.delete('/deleteComment/:id', (req, res) => {
     const id = req.params.id;
     comments.deleteOne({_id: ObjectID(id)})
-    .then(result => {
+    .then((result) => {
       res.status(200).send(result.deletedCount > 0 )
     })
     .catch(err => console.log(err))
@@ -80,8 +104,6 @@ client.connect((err) => {
   app.get('/checkAdmin/:email', (req, res) => {
 
     const email = req.params.email;
-
-    console.log(email)
 
     admins.find({role: 'admin', email})
     .toArray((err, documents) => {
