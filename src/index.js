@@ -27,6 +27,7 @@ client.connect((err) => {
   const comments = client.db(process.env.DB_NAME).collection('comments');
   const admins = client.db(process.env.DB_NAME).collection("admins");
   const votes = client.db(process.env.DB_NAME).collection("votes")
+  //votes.createIndex({"voterId": 1}, {unique: true})
 
   // users operations
 
@@ -65,9 +66,9 @@ client.connect((err) => {
   })
 
   app.post('/setUserVote', (req, res) => {
-    const { contentId, username, useremail, voteDate } = req.body;
+    const { contentId, username, useremail, voteDate, voterId } = req.body;
 
-    votes.insertOne({ contentId, username, useremail, voteDate})
+    votes.insertOne({ contentId, voterId, username, useremail, voteDate})
     .then((result) => {
       if(result){
         res.status(200).send(result.acknowledged);
