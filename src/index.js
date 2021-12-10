@@ -101,6 +101,13 @@ client.connect((err) => {
       });
   });
 
+  app.get("/votes", (req, res) => {
+    votes.find({})
+    .toArray((err, documents) => {
+      res.status(200).send(documents)
+    })
+  })
+
   app.get("/getVotes/:id", (req, res) => {
     const id = req.params.id;
 
