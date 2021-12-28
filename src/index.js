@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { MongoClient } = require("mongodb");
-const ObjectID = require("mongodb").ObjectID;
+const ObjectID = require("mongodb").ObjectId;
 require("dotenv").config();
 
 const app = express();
@@ -190,6 +190,4 @@ client.connect((err) => {
   console.log("connected to mongo instance..");
 });
 
-app.listen(port, () => {
-  console.log(`server is ready on port ${port} `);
-});
+app.listen(process.env.PORT || port );
